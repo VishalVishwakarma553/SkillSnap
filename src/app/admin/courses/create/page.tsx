@@ -8,9 +8,15 @@ import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { SparkleIcon } from "lucide-react"
 import slugify from "slugify"
-import { Textarea } from "@/components/ui/textarea"
-import { Select,SelectContent, SelectItem, SelectTrigger, SelectValue  } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import UploadFile from "@/components/UploadFile"
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
+import { useTransition } from "react"
+import { CreateCourse } from "./action"
+import { toast } from "sonner"
 const CourseCreate = () => {
+    const [isPending, startTransition] = useTransition()
     const form = useForm<createCourseResolver>({
         resolver: zodResolver(createCourseSchema),
         defaultValues: {
@@ -19,8 +25,8 @@ const CourseCreate = () => {
             fileKey: "",
             price: 0,
             duration: 0,
-            category: "",
-            level: "",
+            category: "Web Development",
+            level: "Begginer",
             smallDescription: "",
             slug: "",
         },
@@ -28,7 +34,14 @@ const CourseCreate = () => {
 
     // 2. Define a submit handler.
     function onSubmit(values: createCourseResolver) {
-        console.log(values)
+        startTransition(async() => {
+            try{
+                const res = await CreateCourse(values)
+                toast.message(res.message)
+            }catch(error){
+                console.log(error)
+            }
+        })
     }
 
     return (
@@ -71,7 +84,6 @@ const CourseCreate = () => {
                                 )}
                             />
                             <Button type="button" onClick={() => {
-                                console.log("Slug function is called")
                                 const title = form.getValues("title")
                                 const slug = slugify(title)
                                 form.setValue("slug", slug, { shouldValidate: true })
@@ -84,7 +96,18 @@ const CourseCreate = () => {
                                 <FormItem>
                                     <FormLabel>Description</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Description" {...field} />
+                                        <div>
+                                            <ReactQuill onChange={(e) => field.onChange(e)} theme="snow"
+                                                modules={{
+                                                    toolbar: [
+                                                        [{ 'header': [1, 2, 3, false] }],
+                                                        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                                                        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+                                                        ['clean']
+                                                    ]
+                                                }}
+                                            ></ReactQuill>
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -97,7 +120,7 @@ const CourseCreate = () => {
                                 <FormItem>
                                     <FormLabel>Thumbnail</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Thumbnail" {...field} />
+                                        <UploadFile onChange={field.onChange} value={field.value} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -117,8 +140,8 @@ const CourseCreate = () => {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                {courseCategory.map((category) => (
-                                                    <SelectItem value={category}>{category}</SelectItem>
+                                                {courseCategory.map((category, idx) => (
+                                                    <SelectItem key={idx} value={category}>{category}</SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -131,16 +154,16 @@ const CourseCreate = () => {
                                 name="level"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Category</FormLabel>
+                                        <FormLabel>Level</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select course level " />
+                                                    <SelectValue placeholder="Select course level" />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
                                                 {courseLevel.map((level) => (
-                                                    <SelectItem value={level}>{level}</SelectItem>
+                                                    <SelectItem key={level} value={level}>{level}</SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -154,15 +177,41 @@ const CourseCreate = () => {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Duration</FormLabel>
-                                        
-                                            <FormControl>
-                                                <Input type="number" placeholder="In Approximate Hours" />
-                                            </FormControl>
+                                        <FormControl>
+                                            <Input type="number" onChange={(e) => field.onChange(parseFloat(e.target.value))} placeholder="In Approximate Hours" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="price"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Price</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" placeholder="Course Price" onChange={(e) => field.onChange(parseFloat(e.target.value))} />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         </div>
+                        <FormField
+                            control={form.control}
+                            name="smallDescription"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Small Description</FormLabel>
+                                    <FormControl>
+                                        <Input type="text" placeholder="small description" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <Button type="submit">{isPending?"Creating": "Create Course" }</Button>
                     </form>
                 </Form>
             </CardContent>

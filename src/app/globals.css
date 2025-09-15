@@ -271,3 +271,18 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 } */
+
+.ql-container {
+  min-height: 10rem;
+  overflow-x: auto;
+}
+.ql-container.ql-snow {
+  border: 2px solid var(--input) !important;
+  font-size: 18px;
+
+}
+
+.ql-toolbar.ql-snow {
+  border: 2px solid var(--input) !important;
+  border-bottom: none !important;
+}
